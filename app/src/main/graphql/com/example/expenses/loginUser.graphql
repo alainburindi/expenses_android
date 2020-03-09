@@ -1,0 +1,8 @@
+mutation loginUser($email : String, $username: String, $password: String!){
+    loginUser(email: $email, username: $username, password: $password){
+        user{
+            email
+        }
+        authToken
+    }
+}
