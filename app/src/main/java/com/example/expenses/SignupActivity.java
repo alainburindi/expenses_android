@@ -11,11 +11,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.util.Patterns;
 import android.widget.EditText;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import com.apollographql.apollo.ApolloCall;
-import com.apollographql.apollo.ApolloClient;
 import com.apollographql.apollo.api.Response;
 import com.apollographql.apollo.exception.ApolloException;
 import com.example.expenses.utils.Helper;
@@ -23,26 +20,19 @@ import com.example.expenses.utils.Helper;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.regex.Pattern;
 
-import butterknife.BindView;
 import butterknife.BindViews;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.OnTextChanged;
-import okhttp3.OkHttpClient;
 
 public class SignupActivity extends AppCompatActivity {
     @BindViews({R.id.input_username, R.id.input_email, R.id.input_password, R.id.input_confirm_Password})
     List<EditText> myEditsList;
     private String username, email, password, confirmPassword;
 
-    private static final String baseURL = "https://expenses-stagging.herokuapp.com/expenses/";
-    OkHttpClient okHttpClient;
-    ApolloClient apolloClient;
     CreateUserMutation createUserMutation;
 
-    public static final String PREFERENCES_KEY = "MyACESSKeyTO";
 
     SharedPreferences sharedPreferences;
 
@@ -50,22 +40,18 @@ public class SignupActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_signup);
-        okHttpClient = new OkHttpClient.Builder().build();
-        apolloClient = ApolloClient.builder()
-                .serverUrl(baseURL)
-                .okHttpClient(okHttpClient)
-                .build();
-        sharedPreferences = getSharedPreferences(PREFERENCES_KEY, Context.MODE_PRIVATE);
+        sharedPreferences = getSharedPreferences(Helper.PREFERENCES_KEY, Context.MODE_PRIVATE);
         ButterKnife.bind(this);
     }
 
     @OnTextChanged({R.id.input_password, R.id.input_confirm_Password})
-    void onTextChange(){
+    void onTextChange() {
         myEditsList.get(2).setError(null);
         myEditsList.get(3).setError(null);
     }
 
-    @OnClick(R.id.btn_signup) void sigunp(){
+    @OnClick(R.id.btn_signup)
+    void sigunp() {
         username = myEditsList.get(0).getText().toString();
         email = myEditsList.get(1).getText().toString();
         password = myEditsList.get(2).getText().toString();
@@ -87,22 +73,19 @@ public class SignupActivity extends AppCompatActivity {
                 .password(password)
                 .email(email)
                 .build();
-        apolloClient.mutate(createUserMutation)
+        Helper.apolloClient.mutate(createUserMutation)
                 .enqueue(new ApolloCall.Callback<CreateUserMutation.Data>() {
                     @Override
                     public void onResponse(@NotNull Response<CreateUserMutation.Data> response) {
-
-                            SignupActivity.this.runOnUiThread(new Runnable() {
-                                @Override public void run() {
-                                    progress.cancel();
-                                    if (response.hasErrors()){
-                                        applyError(response.errors().get(0).message());
-                                    }else{
+                        SignupActivity.this.runOnUiThread(() -> {
+                            progress.cancel();
+                            if (response.hasErrors()) {
+                                applyError(response.errors().get(0).message());
+                            } else {
 //                                       start the login activity here
-                                        Log.e(TAG, response.data().createUser.user().toString());
-                                    }
-                                }
-                            });
+                                goToLogin();
+                            }
+                        });
                     }
 
                     @Override
@@ -113,37 +96,38 @@ public class SignupActivity extends AppCompatActivity {
     }
 
     private void applyError(String message) {
-        message =message
+        message = message
                 .replace("[", "")
                 .replace("]", "")
                 .replace("'", "");
-        if(message.contains("email"))
+        if (message.contains("email"))
             SignupActivity.this.myEditsList.get(1).setError(message);
-        else if(message.contains("username"))
+        else if (message.contains("username"))
             SignupActivity.this.myEditsList.get(0).setError(message);
     }
 
     private void validateInputs() {
-        if(username.isEmpty())
+        if (username.isEmpty())
             myEditsList.get(0).setError("The username is required");
-        if(email.isEmpty())
+        if (email.isEmpty())
             myEditsList.get(1).setError("The email is required");
         else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches())
             myEditsList.get(1).setError("The email is not valid");
-        if(password.isEmpty())
+        if (password.isEmpty())
             myEditsList.get(2).setError("The password is required");
-        else if(!Helper.isPasswordValid(password))
+        else if (!Helper.isPasswordValid(password))
             myEditsList.get(2).setError("Password must have at least 8 characters, " +
                     "a number and a capital letter");
-        if(confirmPassword.isEmpty())
+        if (confirmPassword.isEmpty())
             myEditsList.get(3).setError("The confirm password is required");
-        else if (!password.equals(confirmPassword)){
+        else if (!password.equals(confirmPassword)) {
             myEditsList.get(2).setError("The password and confirm password do not match");
             myEditsList.get(3).setError("The password and confirm password do not match");
         }
     }
 
-    @OnClick(R.id.link_login) void goToLogin (){
+    @OnClick(R.id.link_login)
+    void goToLogin() {
         startActivity(new Intent(this, LoginActivity.class));
         finish();
     }
