@@ -8,7 +8,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
-import android.util.Patterns;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -19,32 +18,27 @@ import com.example.expenses.utils.Helper;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import butterknife.BindView;
 import butterknife.BindViews;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
 public class LoginActivity extends AppCompatActivity {
 
-    private String email, username, password;
-    private LoginUserMutation loginUserMutation;
+    private String usernameOREmail, password;
 
-    @BindViews({R.id.input_username_login, R.id.input_email_login, R.id.input_password_login})
+    @BindViews({R.id.input_username_login, R.id.input_password_login})
     List<EditText> myEditsList;
 
-//    @BindView(R.id.save_credentials)
-
-    private SharedPreferences sharedPreferences;
     private SharedPreferences.Editor preferencesEditor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-        sharedPreferences = getSharedPreferences(Helper.PREFERENCES_KEY, Context.MODE_PRIVATE);
+        SharedPreferences sharedPreferences =
+                getSharedPreferences(Helper.PREFERENCES_KEY, Context.MODE_PRIVATE);
         preferencesEditor = sharedPreferences.edit();
         ButterKnife.bind(this);
     }
@@ -57,9 +51,8 @@ public class LoginActivity extends AppCompatActivity {
 
     @OnClick(R.id.btn_login)
     void login() {
-        password = myEditsList.get(2).getText().toString();
-        username = myEditsList.get(0).getText().toString();
-        email = myEditsList.get(1).getText().toString();
+        password = myEditsList.get(1).getText().toString();
+        usernameOREmail = myEditsList.get(0).getText().toString();
         validateInputs();
         if (Helper.areInputsValid(myEditsList))
             authenticateUser();
@@ -72,9 +65,9 @@ public class LoginActivity extends AppCompatActivity {
         progress.setIndeterminate(true);
         progress.show();
         String TAG = "LOGIN";
-        loginUserMutation = LoginUserMutation.builder()
-                .email(email)
-                .username(username)
+        LoginUserMutation loginUserMutation = LoginUserMutation.builder()
+                .email(usernameOREmail)
+                .username(usernameOREmail)
                 .password(password)
                 .build();
         Helper.apolloClient.mutate(loginUserMutation)
@@ -84,8 +77,11 @@ public class LoginActivity extends AppCompatActivity {
                         LoginActivity.this.runOnUiThread(() -> {
                             progress.cancel();
                             if (response.hasErrors()) {
-                                Log.i(TAG, response.errors().get(0).message());
+                                Toast.makeText(LoginActivity.this, response.errors().get(0)
+                                        .message(), Toast.LENGTH_LONG).show();
                             } else {
+                                assert response.data() != null;
+                                assert response.data().loginUser != null;
                                 setUserData(response.data().loginUser);
                             }
                         });
@@ -101,18 +97,17 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void setUserData(LoginUserMutation.LoginUser loginUserData) {
-        preferencesEditor.putString("authToken", loginUserData.authToken());
+        preferencesEditor.putString("authToken", loginUserData.authToken()).commit();
     }
 
     private void validateInputs() {
-        if (username.isEmpty() && email.isEmpty()) {
+        if (usernameOREmail.isEmpty()) {
             myEditsList.get(0).setError("The username or the email is required");
-            myEditsList.get(1).setError("The username or the email is required");
-        } else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches())
-            myEditsList.get(1).setError("The email is not valid");
+        }
         if (password.isEmpty())
             myEditsList.get(2).setError("The password is required");
         else if (!Helper.isPasswordValid(password))
-            myEditsList.get(2).setError("Password must have at least 8 characters, a number and a capital letter");
+            myEditsList.get(2).setError("Password must have at least 8 characters, a number and " +
+                    "a capital letter");
     }
 }

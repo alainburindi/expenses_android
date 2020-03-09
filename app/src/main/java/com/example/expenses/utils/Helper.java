@@ -1,17 +1,8 @@
 package com.example.expenses.utils;
 
-import android.content.Context;
-import android.view.View;
 import android.widget.EditText;
 
-import com.apollographql.apollo.ApolloCall;
 import com.apollographql.apollo.ApolloClient;
-import com.apollographql.apollo.api.Mutation;
-import com.apollographql.apollo.api.Query;
-import com.apollographql.apollo.api.Response;
-import com.apollographql.apollo.exception.ApolloException;
-
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.regex.Pattern;

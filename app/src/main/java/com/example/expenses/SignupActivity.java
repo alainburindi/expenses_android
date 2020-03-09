@@ -79,12 +79,10 @@ public class SignupActivity extends AppCompatActivity {
                     public void onResponse(@NotNull Response<CreateUserMutation.Data> response) {
                         SignupActivity.this.runOnUiThread(() -> {
                             progress.cancel();
-                            if (response.hasErrors()) {
+                            if (response.hasErrors())
                                 applyError(response.errors().get(0).message());
-                            } else {
-//                                       start the login activity here
+                            else
                                 goToLogin();
-                            }
                         });
                     }
 
