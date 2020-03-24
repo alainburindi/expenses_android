@@ -98,6 +98,8 @@ public class LoginActivity extends AppCompatActivity {
 
     private void setUserData(LoginUserMutation.LoginUser loginUserData) {
         preferencesEditor.putString("authToken", loginUserData.authToken()).commit();
+        startActivity(new Intent(this, MainActivity.class));
+        finish();
     }
 
     private void validateInputs() {
@@ -105,9 +107,9 @@ public class LoginActivity extends AppCompatActivity {
             myEditsList.get(0).setError("The username or the email is required");
         }
         if (password.isEmpty())
-            myEditsList.get(2).setError("The password is required");
+            myEditsList.get(1).setError("The password is required");
         else if (!Helper.isPasswordValid(password))
-            myEditsList.get(2).setError("Password must have at least 8 characters, a number and " +
+            myEditsList.get(1).setError("Password must have at least 8 characters, a number and " +
                     "a capital letter");
     }
 }
